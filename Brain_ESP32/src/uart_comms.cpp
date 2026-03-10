@@ -17,7 +17,7 @@ void uart_send_targets(float leftRPM, float rightRPM)
     Serial2.println(rightRPM);
 }
 
-bool uart_recieve_telemetry(long* ticksL, long* ticksR)
+bool uart_receive_telemetry(long* ticksL, long* ticksR)
 {
     bool received = false;
     while (Serial2.available())
