@@ -8,6 +8,7 @@
 #include "drive_system.h"
 
 WebServer server(80);
+File fsUploadFile;
 
 //Internal Helpers
 
@@ -70,6 +71,30 @@ void handleMove()
     server.send(200, "application/json", "{\"status\":\"success\"}");
 }
 
+void handleFileUpload() 
+{
+    HTTPUpload& upload = server.upload();
+    
+    if (upload.status == UPLOAD_FILE_START) 
+    {
+        String filename = upload.filename;
+        if (!filename.startsWith("/")) filename = "/" + filename;
+        Serial.print("Receiving file via WiFi: "); Serial.println(filename);
+        
+        // Open the file in write mode (this overwrites the old file)
+        fsUploadFile = LittleFS.open(filename, "w");
+    } 
+    else if (upload.status == UPLOAD_FILE_WRITE) 
+    {
+        if (fsUploadFile) fsUploadFile.write(upload.buf, upload.currentSize);
+    } 
+    else if (upload.status == UPLOAD_FILE_END) 
+    {
+        if (fsUploadFile) fsUploadFile.close();
+        Serial.print("File saved! Size: "); Serial.println(upload.totalSize);
+    }
+}
+
 //Public Init Function
 void initWebServer()
 {
@@ -96,6 +121,11 @@ void initWebServer()
     //Handle Grid Upload/Run
     server.on("/api/robot/upload", HTTP_POST, handleUpload);
     server.on("/api/robot/start", HTTP_POST, handleStartGrid);
+    // This route takes a POST request, runs the file handler, then sends a 200 OK
+    server.on("/api/update_file", HTTP_POST, 
+        []() { server.send(200, "text/plain", "File Updated Successfully"); }, 
+        handleFileUpload
+    );
 }
 
 void handleClient()
