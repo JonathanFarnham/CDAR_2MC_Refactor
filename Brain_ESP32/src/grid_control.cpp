@@ -1,7 +1,6 @@
 #include "config.h"
 #include "grid_control.h"
 #include "drive_system.h"   
-#include "motor_hardware.h"
 #include <Arduino.h>
 
 //Grid Params
