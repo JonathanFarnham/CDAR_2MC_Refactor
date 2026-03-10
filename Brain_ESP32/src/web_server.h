@@ -7,4 +7,3 @@ void initWebServer();
 void handleClient(); //called in main loop
 void handleUpload();
 void handleStartGrid();
-void handleFileUpload();
