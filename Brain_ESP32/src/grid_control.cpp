@@ -9,6 +9,7 @@ float grid_len_ft = 0;
 float grid_width_ft = 0;
 int total_passes = 0;
 bool turn_right_first = true;
+float target_heading = 0.0;
 
 //Flag for Grid Active
 bool isAutoPilotActive = false;
@@ -36,10 +37,13 @@ void startGridRun()
     if (isAutoPilotActive) return; //prevent from running if already running
 
     isAutoPilotActive = true; //lock
-
     currentState = DRIVING_LONG;
     current_pass = 1;
     current_turn_right = turn_right_first;
+
+    //Lock in permanent grid orientation
+    resetYaw();
+    target_heading = 0.0;
 
     //setup first move (length)
     resetTickCount();
@@ -80,42 +84,65 @@ void handleGrid()
 
     bool targetReached = false;
 
-    //Evaluate if the current movement is finished based on state type
+    //Movement and Heading Logic
     if (currentState == DRIVING_LONG || currentState == DRIVING_SHORT) 
     {
         long current_dist = (abs(getTicksLeft()) + abs(getTicksRight())) / 2;
-        if (current_dist >= target_ticks) {
+        if (current_dist >= target_ticks) 
+        {
             targetReached = true;
+        } 
+        else 
+        {
+            // ACTIVE HEADING HOLD (Using the global target_heading)
+            float headingError = target_heading - getYawAngle(); 
+            
+            float heading_Kp = 5.0; 
+            float rpmCorrection = headingError * heading_Kp;
+            rpmCorrection = constrain(rpmCorrection, -40, 40); 
+            
+            float newLeftRPM = SPEED_GRID_RPM - rpmCorrection;
+            float newRightRPM = SPEED_GRID_RPM + rpmCorrection;
+            
+            setTargetRPM(newLeftRPM, newRightRPM);
         }
     } 
     else if (currentState == TURNING_1 || currentState == TURNING_2) 
     {
-        //Check if integrated yaw has reached 90 degrees
-        if (abs(getYawAngle()) >= 90.0) {
+        //Check degree left to get to target
+        //Shoot for 86 degrees to acount for turning inertia
+        float degreesRemaining = abs(target_heading - getYawAngle());
+        if (degreesRemaining <= 4.0) 
+        {
             targetReached = true;
         }
     }
 
-    //Transition State if target reached
+    //State Transition Logic
     if (targetReached)
     {
         stopAll();
-        delay(200);
+        delay(200); 
         resetTickCount();
-        resetYaw(); //Reset the gyro angle to 0 for the next movement
 
-        //State transition logic
         switch (currentState)
         {
             case DRIVING_LONG:
-                if (current_pass >= total_passes) {
+                if (current_pass >= total_passes) 
+                {
                     currentState = FINISHED;
-                } else {
+                } else 
+                {
                     currentState = TURNING_1;
                     
-                    if (current_turn_right) {
+                    //Set the new absolute target heading for the turn
+                    if (current_turn_right) 
+                    {
+                        target_heading -= 90.0; //Right turns go negative
                         setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM); 
-                    } else {
+                    } else 
+                    {
+                        target_heading += 90.0; //Left turns go positive
                         setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
                     }
                 }
@@ -133,9 +160,13 @@ void handleGrid()
             case DRIVING_SHORT:
                 currentState = TURNING_2;
                 
-                if (current_turn_right) {
+                if (current_turn_right) 
+                {
+                    target_heading -= 90.0; 
                     setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
-                } else {
+                } else 
+                {
+                    target_heading += 90.0; 
                     setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
                 }
                 break;
