@@ -151,3 +151,6 @@ void stopAll()
 //Telemetry Functions
 float getCurrentRPMLeft() {return currentRPM_L;}
 float getTargetRPMRight() {return activeTargetRPM_R;}
+
+float getTargetRPMLeft() {return activeTargetRPM_L;}
+float getTargetRPMRight() {return activeTargetRPM_R;}

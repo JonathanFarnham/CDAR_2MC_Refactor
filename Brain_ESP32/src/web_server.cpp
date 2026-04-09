@@ -57,12 +57,16 @@ void handleMove()
         return;
     }
 
-    //Get Manual Control Commands
+    int speedRPM = doc["speed"] | 300; // Defaulting to safe 300 RPM
+    const char* cmd = doc["direction"];
+
     if (strcmp(cmd, "FORWARD") == 0) setTargetRPM(speedRPM, speedRPM);
     else if (strcmp(cmd, "BACKWARD") == 0) setTargetRPM(-speedRPM, -speedRPM);
     else if (strcmp(cmd, "LEFT") == 0) setTargetRPM(-speedRPM, speedRPM);
     else if (strcmp(cmd, "RIGHT") == 0) setTargetRPM(speedRPM, -speedRPM);
     else if (strcmp(cmd, "STOP") == 0) stopAll();
+
+    server.send(200, "application/json", "{\"status\":\"success\"}");
 }
 
 //Public Init Function

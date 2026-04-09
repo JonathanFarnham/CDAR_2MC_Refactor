@@ -33,6 +33,11 @@
 #define MAX_RPM_HARDWARE 5600
 #define MAX_OPERATING_RPM 3000
 
+//Kickstart (not used)
+#define KICKSTART_MS 50
+#define KICKSTART_PWM 0
+#define MIN_REGULATED_RPM 40
+
 //PID Tuning and Wheel Trim
 #define PID_KP 0.8
 #define PID_KI 0.3
