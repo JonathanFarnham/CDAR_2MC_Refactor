@@ -1,6 +1,7 @@
 #include "config.h"
 #include "grid_control.h"
-#include "drive_system.h"   
+#include "drive_system.h" 
+#include "mpu_handler.h"  
 #include <Arduino.h>
 
 //Grid Params
@@ -71,61 +72,66 @@ void handleGrid()
     {
         if (currentState == FINISHED)
         {
-            stopGridRun(); //Ensure flag gets reset
+            stopGridRun(); 
             currentState = IDLE;
         }
         return;
     }
 
-    // UPDATED: Calculate Average Distance manually
-    long current_dist = (abs(getTicksLeft()) + abs(getTicksRight())) / 2;
+    bool targetReached = false;
 
-    //check if target distance reached
-    if (current_dist >= target_ticks)
+    //Evaluate if the current movement is finished based on state type
+    if (currentState == DRIVING_LONG || currentState == DRIVING_SHORT) 
+    {
+        long current_dist = (abs(getTicksLeft()) + abs(getTicksRight())) / 2;
+        if (current_dist >= target_ticks) {
+            targetReached = true;
+        }
+    } 
+    else if (currentState == TURNING_1 || currentState == TURNING_2) 
+    {
+        //Check if integrated yaw has reached 90 degrees
+        if (abs(getYawAngle()) >= 90.0) {
+            targetReached = true;
+        }
+    }
+
+    //Transition State if target reached
+    if (targetReached)
     {
         stopAll();
         delay(200);
         resetTickCount();
+        resetYaw(); //Reset the gyro angle to 0 for the next movement
 
-        //State transition
+        //State transition logic
         switch (currentState)
         {
             case DRIVING_LONG:
-                //Just finished long vertical line
-                if (current_pass >= total_passes)
-                {
+                if (current_pass >= total_passes) {
                     currentState = FINISHED;
-                } else
-                {
+                } else {
                     currentState = TURNING_1;
-                    target_ticks = TICKS_PER_TURN;
                     
-                    //Manual RPM setting for turning
                     if (current_turn_right) {
-                        // Turn Right (Clockwise): Left Fwd, Right Back
                         setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM); 
                     } else {
-                        // Turn Left (Counter-Clockwise): Left Back, Right Fwd
                         setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
                     }
                 }
                 break;
             
             case TURNING_1:
-                //Finished First 90 Degree Turn now doing short drive
                 currentState = DRIVING_SHORT;
-                //calculate spacing (wdith / (passes - 1))
                 {
                     float spacing = grid_width_ft / (total_passes - 1);
                     target_ticks = spacing * TICKS_PER_FOOT;
-                    setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM); // UPDATED
+                    setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
                 }
                 break;
 
             case DRIVING_SHORT:
-                //Finished driving short now turn same direction
                 currentState = TURNING_2;
-                target_ticks = TICKS_PER_TURN;
                 
                 if (current_turn_right) {
                     setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
@@ -135,10 +141,8 @@ void handleGrid()
                 break;
 
             case TURNING_2:
-                //Finished Second Turn ready for next length wise run
                 currentState = DRIVING_LONG;
                 current_pass++;
-                //Flip Turn Direction for next loop
                 current_turn_right = !current_turn_right;
 
                 target_ticks = grid_len_ft * TICKS_PER_FOOT;

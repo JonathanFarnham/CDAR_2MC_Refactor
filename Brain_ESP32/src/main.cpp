@@ -3,6 +3,7 @@
 #include "drive_system.h"
 #include "web_server.h"
 #include "grid_control.h"
+#include "mpu_handler.h"
 
 TaskHandle_t TaskWeb;
 
@@ -10,7 +11,8 @@ unsigned long lastDebugTime = 0;
 const int DEBUG_INTERVAL = 500; // print every 500ms so we don't spam the console
 
 // Core 0: Dedicated entirely to handling WiFi and HTTP Requests
-void TaskWebCode(void * pvParameters) {
+void TaskWebCode(void * pvParameters) 
+{
   for(;;) {
     handleClient();
     vTaskDelay(2 / portTICK_PERIOD_MS); 
@@ -18,11 +20,13 @@ void TaskWebCode(void * pvParameters) {
 }
 
 // Core 1: Setup
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
 
   initDriveSystem(); // Initializes UART bridge
   initWebServer();   // Mounts LittleFS and starts AP
+  initMPU();         //Init MPU
 
   // Launch Web Server on Core 0
   xTaskCreatePinnedToCore(
@@ -33,7 +37,9 @@ void setup() {
 }
 
 // Core 1: Main Logic Loop
-void loop() {
+void loop() 
+{
+  updateMPU();         //Calculate Yaw angle
   updateDriveSystem(); // Grab latest encoder ticks via UART
   handleGrid();        // Process grid navigation state machine
 

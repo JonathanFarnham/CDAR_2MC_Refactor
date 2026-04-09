@@ -14,6 +14,7 @@
 //I2C / MPU-6050 Pins (Brain Only)
 #define I2C_SDA 21
 #define I2C_SCL 22
+#define MPU_INT_PIN 19
 
 //Motor Pin Setup (Brawn Only)
 #define MOTOR_LEFT_EN 13
