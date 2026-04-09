@@ -100,6 +100,7 @@ void updateDriveSystem()
         float pidTarget_L = activeTargetRPM_L;
         float pidTarget_R = activeTargetRPM_R;
 
+        /* Remooved in Favor of active heading control
         // Cross Coupling to Reduce Straight Line Drift
         if (targetRPM_L == targetRPM_R && targetRPM_L > 0) 
         {
@@ -121,6 +122,7 @@ void updateDriveSystem()
         {
             wasDrivingStraight = false;
         }
+        */
 
         // PID Control
         int outputL = 0;
