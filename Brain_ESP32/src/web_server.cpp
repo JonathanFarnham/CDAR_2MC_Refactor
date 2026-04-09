@@ -58,16 +58,11 @@ void handleMove()
     }
 
     //Get Manual Control Commands
-    int speedRPM = doc["speed"] | 1000;
-    const char* cmd = doc["direction"];
-
     if (strcmp(cmd, "FORWARD") == 0) setTargetRPM(speedRPM, speedRPM);
     else if (strcmp(cmd, "BACKWARD") == 0) setTargetRPM(-speedRPM, -speedRPM);
-    else if (strcmp(cmd, "LEFT") == 0) setTargetRPM(speedRPM, -speedRPM);
-    else if (strcmp(cmd, "RIGHT") == 0) setTargetRPM(-speedRPM, speedRPM);
+    else if (strcmp(cmd, "LEFT") == 0) setTargetRPM(-speedRPM, speedRPM);
+    else if (strcmp(cmd, "RIGHT") == 0) setTargetRPM(speedRPM, -speedRPM);
     else if (strcmp(cmd, "STOP") == 0) stopAll();
-    
-    server.send(200, "application/json", "{\"status\":\"success\"}");
 }
 
 //Public Init Function
@@ -93,11 +88,8 @@ void initWebServer()
     server.begin();
     Serial.println("HTTP server started");
 
-    //Handle Grid Upload/Run
+    //Handle Grid Upload/Run/Stop
     server.on("/api/robot/upload", HTTP_POST, handleUpload);
-    server.on("/api/robot/start", HTTP_POST, handleStartGrid);
-
-    //Handle Stop
     server.on("/api/robot/start", HTTP_POST, handleStartGrid);
     server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
 }

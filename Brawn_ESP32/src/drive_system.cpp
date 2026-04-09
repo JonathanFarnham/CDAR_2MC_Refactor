@@ -135,3 +135,19 @@ void updateDriveSystem() {
         setMotorRaw(outputL, outputR);
     }
 }
+
+//Stop All
+void stopAll()
+{
+    targetRPM_L = 0;
+    targetRPM_R = 0;
+    activeTargetRPM_L = 0;
+    activeTargetRPM_R = 0;
+    pidL.reset();
+    pidR.reset();
+    setMotorRaw(0, 0);
+}
+
+//Telemetry Functions
+float getCurrentRPMLeft() {return currentRPM_L;}
+float getTargetRPMRight() {return activeTargetRPM_R;}

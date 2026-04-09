@@ -35,9 +35,10 @@
 
 //PID Tuning and Wheel Trim
 #define PID_KP 0.8
-#define PID_KI 0.03
+#define PID_KI 0.3
 #define PID_KD 0.00 //Removed D value encoders too low resolution to get effective results
 #define CALC_INTERVAL 100 //Calc Velocity every 100ms
+#define WHEEL_TRIM 1.03 //Reduce Speed of the Left motor to account for tolerances
 
 //Motor Inversion
 #define MOTOR_LEFT_INVERT false
