@@ -25,22 +25,26 @@ unsigned long lastCalcTime = 0;
 long lastTicks_L = 0;
 long lastTicks_R = 0;
 
-void initDriveSystem() {
+void initDriveSystem() 
+{
     initMotorHardware();
     pidL.reset();
     pidR.reset();
 }
 
-void setTargetRPM(float leftRPM, float rightRPM) {
+void setTargetRPM(float leftRPM, float rightRPM)
+{
     targetRPM_L = leftRPM;
     targetRPM_R = rightRPM;
 }
 
-void updateDriveSystem() {
+void updateDriveSystem() 
+{
     unsigned long now = millis();
     long dt_ms = now - lastCalcTime;
 
-    if (dt_ms >= CALC_INTERVAL) {
+    if (dt_ms >= CALC_INTERVAL) 
+    {
         lastCalcTime = now;
         float dt_sec = dt_ms / 1000.0;
 
@@ -48,7 +52,8 @@ void updateDriveSystem() {
         long currTicksR = getTicksRight();
 
         // Catch tick reset so the velocity doesn't spike
-        if (currTicksL == 0 && currTicksR == 0 && (lastTicks_L != 0 || lastTicks_R != 0)) {
+        if (currTicksL == 0 && currTicksR == 0 && (lastTicks_L != 0 || lastTicks_R != 0)) 
+        {
             lastTicks_L = 0;
             lastTicks_R = 0;
             currentRPM_L = 0;
@@ -70,19 +75,25 @@ void updateDriveSystem() {
         currentRPM_R = (currentRPM_R * 0.7) + (rawRPM_R * 0.3);
 
         // Ramping Logic
-        if (abs(targetRPM_L - activeTargetRPM_L) <= RAMP_STEP_RPM) {
+        if (abs(targetRPM_L - activeTargetRPM_L) <= RAMP_STEP_RPM) 
+        {
             activeTargetRPM_L = targetRPM_L;
-        } else if (targetRPM_L > activeTargetRPM_L) {
+        } else if (targetRPM_L > activeTargetRPM_L) 
+        {
             activeTargetRPM_L += RAMP_STEP_RPM;
-        } else {
+        } else 
+        {
             activeTargetRPM_L -= RAMP_STEP_RPM;
         }
 
-        if (abs(targetRPM_R - activeTargetRPM_R) <= RAMP_STEP_RPM) {
+        if (abs(targetRPM_R - activeTargetRPM_R) <= RAMP_STEP_RPM) 
+        {
             activeTargetRPM_R = targetRPM_R;
-        } else if (targetRPM_R > activeTargetRPM_R) {
+        } else if (targetRPM_R > activeTargetRPM_R) 
+        {
             activeTargetRPM_R += RAMP_STEP_RPM;
-        } else {
+        } else 
+        {
             activeTargetRPM_R -= RAMP_STEP_RPM;
         }
 
@@ -90,7 +101,8 @@ void updateDriveSystem() {
         float pidTarget_R = activeTargetRPM_R;
 
         // Cross Coupling to Reduce Straight Line Drift
-        if (targetRPM_L == targetRPM_R && targetRPM_L > 0) {
+        if (targetRPM_L == targetRPM_R && targetRPM_L > 0) 
+        {
             if(!wasDrivingStraight) {
                 syncTickOffset = (getTicksLeft() * WHEEL_TRIM) - getTicksRight();
                 wasDrivingStraight = true;
@@ -105,7 +117,8 @@ void updateDriveSystem() {
 
             pidTarget_L -= syncAdjustment;
             pidTarget_R += syncAdjustment;
-        } else {
+        } else 
+        {
             wasDrivingStraight = false;
         }
 
@@ -113,19 +126,23 @@ void updateDriveSystem() {
         int outputL = 0;
         int outputR = 0;
 
-        if (targetRPM_L == 0) {
+        if (targetRPM_L == 0) 
+        {
             outputL = 0;
             activeTargetRPM_L = 0;
             pidL.reset();
-        } else {
+        } else 
+        {
             outputL = (int)pidL.compute(pidTarget_L, currentRPM_L, dt_sec);
         }
 
-        if (targetRPM_R == 0) {
+        if (targetRPM_R == 0) 
+        {
             outputR = 0;
             activeTargetRPM_R = 0;
             pidR.reset();
-        } else {
+        } else 
+        {
             outputR = (int)pidR.compute(pidTarget_R, currentRPM_R, dt_sec);
         }
 
