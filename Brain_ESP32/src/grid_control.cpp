@@ -103,10 +103,10 @@ void handleGrid()
                     //Manual RPM setting for turning
                     if (current_turn_right) {
                         // Turn Right (Clockwise): Left Fwd, Right Back
-                        setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM); 
+                        setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM); 
                     } else {
                         // Turn Left (Counter-Clockwise): Left Back, Right Fwd
-                        setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
+                        setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
                     }
                 }
                 break;
@@ -128,9 +128,9 @@ void handleGrid()
                 target_ticks = TICKS_PER_TURN;
                 
                 if (current_turn_right) {
-                    setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
-                } else {
                     setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
+                } else {
+                    setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
                 }
                 break;
 

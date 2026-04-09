@@ -218,6 +218,11 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch('/api/robot/start', { method: 'POST' });
         
         };
+
+        document.getElementById('kill-btn').onclick = () => {
+            fetch('/api/robot/stop_grid', {method: 'POST' })
+            .catch(err => console.error("Failed to send stop command: ", err))
+        }
     }
     // LOGIC FOR MANUAL CONTROL PAGE------------------------------------------------------------------------
     if (isManualPage) {

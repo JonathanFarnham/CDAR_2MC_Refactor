@@ -96,6 +96,10 @@ void initWebServer()
     //Handle Grid Upload/Run
     server.on("/api/robot/upload", HTTP_POST, handleUpload);
     server.on("/api/robot/start", HTTP_POST, handleStartGrid);
+
+    //Handle Stop
+    server.on("/api/robot/start", HTTP_POST, handleStartGrid);
+    server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
 }
 
 void handleClient()
@@ -130,4 +134,10 @@ void handleStartGrid()
 {
     startGridRun();
     server.send(200, "application/json", "{\"status\":\"started\"}");
+}
+
+void handleStopGrid()
+{
+    stopGridRun();
+    server.send(200, "application/json", "{\"status\":\"stopped\"}");
 }

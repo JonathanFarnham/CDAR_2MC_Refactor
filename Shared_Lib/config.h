@@ -33,20 +33,20 @@
 #define MAX_RPM_HARDWARE 5600
 #define MAX_OPERATING_RPM 3000
 
-//PID Tuning
-#define PID_KP 0.25  // Tuned for power
-#define PID_KI 0.00
-#define PID_KD 0.01
-#define CALC_INTERVAL 20 // Calculate velocity every 20ms
+//PID Tuning and Wheel Trim
+#define PID_KP 0.8
+#define PID_KI 0.03
+#define PID_KD 0.00 //Removed D value encoders too low resolution to get effective results
+#define CALC_INTERVAL 100 //Calc Velocity every 100ms
 
 //Motor Inversion
-#define MOTOR_LEFT_INVERT true
-#define MOTOR_RIGHT_INVERT true // Fixed runaway issue
+#define MOTOR_LEFT_INVERT false
+#define MOTOR_RIGHT_INVERT true
 
-//Robot Parameters **NEED UPDATES
-#define TICKS_PER_FOOT 282
-#define TICKS_PER_TURN 145
+//Robot Parameters
+#define TICKS_PER_FOOT 50
+#define TICKS_PER_TURN 54
 
 //Grid Speed Values
-#define SPEED_GRID_RPM 1000
-#define SPEED_TURN_RPM 600
+#define SPEED_GRID_RPM 300
+#define SPEED_TURN_RPM 200
