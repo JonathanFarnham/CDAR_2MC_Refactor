@@ -1,5 +1,6 @@
 //Shared Configuration File
 #pragma once
+#include <Arduino.h>
 
 //UART Communication Pins
 #define UART_TX_PIN 17

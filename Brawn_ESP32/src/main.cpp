@@ -6,6 +6,7 @@
 #include "motor_hardware.h" // Needed to get the raw ticks to send back
 
 unsigned long lastTelemetryTime = 0;
+const int TELEMETRY_INTERVAL = 20;
 
 void setup() {
     Serial.begin(115200); // For PC Debugging
@@ -27,7 +28,7 @@ void loop() {
     updateDriveSystem();
 
     // 3. Constantly broadcast our physical encoder ticks back to the Brain
-    if (millis() - lastTelemetryTime >= CALC_INTERVAL) {
+    if (millis() - lastTelemetryTime >= TELEMETRY_INTERVAL) {
         lastTelemetryTime = millis();
         uart_send_telemetry(getTicksLeft(), getTicksRight());
     }
