@@ -47,8 +47,9 @@ void initMPU()
     float sumZ = 0;
     for(int i = 0; i < 200; i++)
     {
-        //wait for flag before reading during calibration
-        while(!mpuDataReady) { yield(); }
+        //wait for flag before reading during calibration with timeout
+        unsigned long waitStart = millis();
+        while(!mpuDataReady && (millis() - waitStart < 20)) { yield(); }
         mpuDataReady = false;
 
         sensors_event_t a, g, temp;
@@ -92,4 +93,6 @@ float getYawAngle()
 void resetYaw()
 {
     currentYaw = 0.0;
+    lastMPUTime = micros(); //Reset Timer so dt doesnt spike
+    mpuDataReady = false; //clear interrupts triggered during delay
 }
