@@ -1,0 +1,60 @@
+<!Doctype html>
+<html lang="en">
+    <head>
+        <meta charset = "UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CDAR Manual Control</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" class="nav-link">
+                <h1>CDAR Manual Control</h1>
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator">
+                Status: <span id="connection-status">Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard manual-layout" id="manual-page">
+        
+        <section class="control-box">
+            <h2>Manual Override</h2>
+            <p>Use buttons or keyboard arrows to move.</p>
+            
+            <div class = "speed-control">
+                <label for="speed-slider">Target RPM: <span id="speed-display">1000</span></label>
+                <input type="range" id="speed-slider" min="0" max="3000" value="1000" step="100">
+            </div>
+
+            <div class="d-pad-container">
+                <button class="d-btn" id="btn-up" data-cmd="FORWARD">▲</button>
+                <button class="d-btn" id="btn-left" data-cmd="LEFT">◀</button>
+                <button class="d-btn stop-btn" id="btn-stop" data-cmd="STOP">STOP</button>
+                <button class="d-btn" id="btn-right" data-cmd="RIGHT">▶</button>
+                <button class="d-btn" id="btn-down" data-cmd="BACKWARD">▼</button>
+            </div>
+
+            <div class="encoder-display" style="text-align: center; margin-bottom: 1rem; font-weight: bold; color: var(--text);">
+                Encoders &rarr; Left: [<span id="enc-left">0</span>] | Right: [<span id="enc-right">0</span>]
+            </div>
+
+            <div class="log-display">
+                <span id="command-log">Waiting for command...</span>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>CDAR Version: 1.0</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+</html>

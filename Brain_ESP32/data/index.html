@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDAR Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="manual.html" class="nav-link" title="Switch to Manual Control">
+                <h1>CDAR Control Panel</h1>
+            </a>
+        </div>
+        <div class="header-right">
+            <button class="export-trigger" id="export-menu-btn">Export Data &#9662;</button>
+            <nav class="menu hidden" id="menu">
+                <button id="export-csv">Download CSV</button>
+                <button id="export-png">Download Heatmap (PNG)</button>
+            </nav>  
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <aside class="config-panel">
+            <section class="box">
+                <h3>Grid Configuration</h3>
+                <div class="input-group">
+                    <label for="grid-title">Grid Title</label>
+                    <input type="text" id="grid-title" placeholder="e.g. Test Area">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="length">Length (ft)</label>
+                        <input type="number" id="length" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="width">Width (ft)</label>
+                        <input type="number" id="width" placeholder="0">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="passes">Number of Passes</label>
+                    <input type="number" id="passes" placeholder="Total passes">
+                </div>
+            </section>
+
+            <section class="box">
+                <h3>Initial Direction</h3>
+                <div class="toggle-group" id="turn-toggle">
+                    <button type="button" class="toggle-btn active" data-value="left">Turn Left</button>
+                    <button type="button" class="toggle-btn" data-value="right">Turn Right</button>
+                </div>
+            </section>
+
+            <div class="action-buttons">
+                <button id="upload-btn" class="btn-primary">Upload to Robot</button>
+                <button id="run-btn" class="btn-success">Run Grid</button>
+            </div>
+
+            <div class="secondary-actions" style="margin-top: 1rem;">
+                <button id="clear-data-btn" class="btn-danger">Clear All Data</button>
+            </div>
+        </aside>
+
+        <section class="display-panel">
+            <div class="display-tabs">
+                <button id="show-heatmap" class="tab-btn active">Heatmap View</button>
+                <button id="show-table" class="tab-btn">Data Table</button>
+            </div>
+
+            <div class="content-area">
+                <div id="heatmap-view" class="view">
+                    <div class="heatmap-container" id="heatmap-area">
+                        <button id="fullscreen-btn" class="btn-secondary">⛶ Fullscreen View</button>
+        
+                        <canvas id="heatmapCanvas"></canvas>
+        
+                        <div class="heatmap-legend" id="heatmap-legend">
+                            <div style="text-align: center; font-size: 0.75rem; margin-bottom: 5px; color: #64748b; font-weight: bold;">
+                                Voltage Reading (mV)
+                            </div>
+                            <div id="legend-bar" style="display: flex; height: 15px; border-radius: 4px; overflow: hidden; border: 1px solid #ddd;"></div>
+                            <div id="legend-labels" style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.65rem; color: #64748b;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="table-view" class="view hidden">
+                    <div class="table-header-info">
+                        <h4 id="display-grid-title">Current Grid: None</h4>
+                    </div>
+                    <div class="table-container">
+                        <table id="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Point #</th>
+                                    <th>X (ft)</th>
+                                    <th>Y (ft)</th>
+                                    <th>Reading</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <tr>
+                                    <td colspan="5" class="empty-msg">No data recorded. Press "Start" to begin tracking.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>CDAR Version: 1.0</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
