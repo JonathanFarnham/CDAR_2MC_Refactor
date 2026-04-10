@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../Brawn_ESP32"
+		},
+		{
+			"path": "../../Shared_Lib"
+		}
+	]
+}
