@@ -5,6 +5,7 @@
 void initUART() 
 {
     Serial2.begin(UART_BAUD_RATE, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
+    Serial2.setTimeout(10);
 }
 
 bool uart_receive_targets(float* targetL, float* targetR) 

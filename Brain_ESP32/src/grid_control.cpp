@@ -11,6 +11,10 @@ int total_passes = 0;
 bool turn_right_first = true;
 float target_heading = 0.0;
 
+//Heading Data Timer Variables
+unsigned long lastHeadingSendTime = 0;
+const int HEADING_SEND_INTERVAL = 100; //Match calc interval time
+
 //Flag for Grid Active
 bool isAutoPilotActive = false;
 
@@ -94,17 +98,20 @@ void handleGrid()
         } 
         else 
         {
-            // ACTIVE HEADING HOLD (Using the global target_heading)
-            float headingError = target_heading - getYawAngle(); 
+            if (millis() - lastHeadingSendTime >= HEADING_SEND_INTERVAL)
+            {
+                //Active Heading Control
+                float headingError = target_heading - getYawAngle(); 
             
-            float heading_Kp = 5.0; 
-            float rpmCorrection = headingError * heading_Kp;
-            rpmCorrection = constrain(rpmCorrection, -40, 40); 
+                float heading_Kp = 5.0; 
+                float rpmCorrection = headingError * heading_Kp;
+                rpmCorrection = constrain(rpmCorrection, -40, 40); 
             
-            float newLeftRPM = SPEED_GRID_RPM - rpmCorrection;
-            float newRightRPM = SPEED_GRID_RPM + rpmCorrection;
+                float newLeftRPM = SPEED_GRID_RPM - rpmCorrection;
+                float newRightRPM = SPEED_GRID_RPM + rpmCorrection;
             
-            setTargetRPM(newLeftRPM, newRightRPM);
+                setTargetRPM(newLeftRPM, newRightRPM);
+            }
         }
     } 
     else if (currentState == TURNING_1 || currentState == TURNING_2) 
@@ -122,7 +129,12 @@ void handleGrid()
     if (targetReached)
     {
         stopAll();
-        delay(200); 
+        unsigned long brakeTimer = millis();
+        while (millis() - brakeTimer < 200)
+        {
+            updateMPU(); //keep integrating uaw during inertial coast
+            delay(1);
+        } 
         resetTickCount();
 
         switch (currentState)

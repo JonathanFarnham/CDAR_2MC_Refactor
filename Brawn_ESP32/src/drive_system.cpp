@@ -51,15 +51,6 @@ void updateDriveSystem()
         long currTicksL = getTicksLeft();
         long currTicksR = getTicksRight();
 
-        // Catch tick reset so the velocity doesn't spike
-        if (currTicksL == 0 && currTicksR == 0 && (lastTicks_L != 0 || lastTicks_R != 0)) 
-        {
-            lastTicks_L = 0;
-            lastTicks_R = 0;
-            currentRPM_L = 0;
-            currentRPM_R = 0;
-        }
-
         long deltaL = currTicksL - lastTicks_L;
         long deltaR = currTicksR - lastTicks_R;
 
