@@ -58,3 +58,8 @@
 //Grid Speed Values
 #define SPEED_GRID_RPM 300
 #define SPEED_TURN_RPM 200
+
+//Servo Definitions
+#define SERVO_PIN 18
+#define SERVO_WHEEL_UP 90
+#define SERVO_WHEEL_DOWN 0
