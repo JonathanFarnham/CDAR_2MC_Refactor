@@ -4,6 +4,7 @@
 #include "web_server.h"
 #include "grid_control.h"
 #include "mpu_handler.h"
+#include "electrode_servo.h"
 
 TaskHandle_t TaskWeb;
 
@@ -27,6 +28,7 @@ void setup()
   initDriveSystem(); // Initializes UART bridge
   initWebServer();   // Mounts LittleFS and starts AP
   initMPU();         //Init MPU
+  initServo();       //Initizalize Servo for Electrode Wheel
 
   // Launch Web Server on Core 0
   xTaskCreatePinnedToCore(
