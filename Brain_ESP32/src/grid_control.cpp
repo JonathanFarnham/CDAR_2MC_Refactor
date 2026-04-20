@@ -100,6 +100,7 @@ void handleGrid()
         {
             if (millis() - lastHeadingSendTime >= HEADING_SEND_INTERVAL)
             {
+                lastHeadingSendTime = millis();
                 //Active Heading Control
                 float headingError = target_heading - getYawAngle(); 
             
