@@ -5,6 +5,7 @@
 #include "grid_control.h"
 #include "mpu_handler.h"
 #include "electrode_servo.h"
+#include "voltage_reading.h"
 
 TaskHandle_t TaskWeb;
 
@@ -14,7 +15,8 @@ const int DEBUG_INTERVAL = 500; // print every 500ms so we don't spam the consol
 // Core 0: Dedicated entirely to handling WiFi and HTTP Requests
 void TaskWebCode(void * pvParameters) 
 {
-  for(;;) {
+  for(;;) 
+  {
     handleClient();
     vTaskDelay(2 / portTICK_PERIOD_MS); 
   }
@@ -29,6 +31,7 @@ void setup()
   initWebServer();   // Mounts LittleFS and starts AP
   initMPU();         //Init MPU
   initServo();       //Initizalize Servo for Electrode Wheel
+  initElectrodeSensor(); //Initialize half-cell sensor
 
   // Launch Web Server on Core 0
   xTaskCreatePinnedToCore(

@@ -16,6 +16,13 @@
 #define I2C_SCL 5
 #define MPU_INT_PIN 15
 
+//ADS1220 SPI Pins (Brain Only)
+#define ADS1220_CS_PIN 2
+#define ADS1220_DRDY_PIN 34
+#define ADS1220_SCK_PIN 14
+#define ADS1220_MISO_PIN 12
+#define ADS1220_MOSI_PIN 13
+
 //Motor Pin Setup (Brawn Only)
 #define MOTOR_LEFT_EN 13
 #define MOTOR_LEFT_IN1 12
@@ -59,7 +66,11 @@
 #define SPEED_GRID_RPM 300
 #define SPEED_TURN_RPM 200
 
-//Servo Definitions
+//Grid Data Collection Limits
+#define MAX_GRID_PASSES 30
+#define MAX_GRID_SAMPLES 50
+
+//Servo Definitions (Brain Pin Def)
 #define SERVO_PIN 18
 #define SERVO_WHEEL_UP 90
 #define SERVO_WHEEL_DOWN 0

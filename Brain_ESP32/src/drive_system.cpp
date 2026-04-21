@@ -15,6 +15,7 @@ void initDriveSystem() {
 
 void updateDriveSystem() {
     // Continuously poll UART for telemetry updates from the Brawn
+    uart_flush_targets();
     long temp_l, temp_r;
     if (uart_receive_telemetry(&temp_l, &temp_r)) {
         virtual_ticks_l = temp_l;
@@ -24,11 +25,11 @@ void updateDriveSystem() {
 
 void setTargetRPM(float leftRPM, float rightRPM) {
     // Send targets to Brawn instead of calculating PID locally
-    uart_send_targets(leftRPM, rightRPM); 
+    uart_enqueue_targets(leftRPM, rightRPM); 
 }
 
 void stopAll() {
-    uart_send_targets(0, 0);
+    uart_enqueue_targets(0, 0);
 }
 
 // Return the true distance by subtracting the offset

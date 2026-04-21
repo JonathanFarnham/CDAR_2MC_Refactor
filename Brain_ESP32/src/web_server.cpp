@@ -57,7 +57,7 @@ void handleMove()
         return;
     }
 
-    int speedRPM = doc["speed"] | 300; // Defaulting to safe 300 RPM
+    int speedRPM = doc["speed"] | 300; // Defaulting to 300 RPM
     const char* cmd = doc["direction"];
 
     if (strcmp(cmd, "FORWARD") == 0) setTargetRPM(speedRPM, speedRPM);
@@ -68,6 +68,66 @@ void handleMove()
 
     server.send(200, "application/json", "{\"status\":\"success\"}");
 }
+
+/*
+    /api/robot/data
+    Returns all collected half-cell potential readings as a 2D JSON Array
+    ready for CountourMapGenerator.renderToCanvas().
+
+    Serpentine correction is applied here as the robot drives in alternating passes
+    in opposite spatial directions so odd indexed passes are reversed so that colum 0
+    always represents the same physical side of the survey area.
+*/
+
+void handleGetData()
+{
+    int passes = getCompletedPasses();
+    int maxSamples = getMaxSamplesAnyPass();
+    //32KB should be good for a 30x50 grid (1500floats * ~10chars + overhead)
+    DynamicJsonDocument doc(32768);
+    doc["isRunning"] = isGridRunning();
+    doc["passes"] = passes;
+    doc["samplesPerPass"] = maxSamples;
+
+    JsonArray dataArr = doc.createNestedArray("data");
+
+    for (int p = 0; p < passes; p++)
+    {
+        JsonArray row = dataArr.createNestedArray();
+        int samplesInPass = getSamplesForPass(p);
+        bool reversedPass = (p % 2 == 1);
+
+        //Add the measured samples, applying serpentine correction
+        if (reversedPass)
+        {
+            for (int s = samplesInPass - 1; s >= 0; s--)
+            {
+                row.add(getGridReading(p, s));
+            }
+        }
+        else
+        {
+            for (int s = 0; s , samplesInPass; s++)
+            {
+                row.add(getGridReading(p, s));
+            }
+        }
+
+        //Pad Shorter rows like an incomplete final pass with the last value
+        //So that the frontend always receives a rectangluar array
+        float padValue = (samplesInPass > 0) ? getGridReading(p, samplesInPass - 1) : 0.0f;
+        for (int s = samplesInPass; s < maxSamples; s++)
+        {
+            row.add(padValue);
+        }
+
+        String output;
+        serializeJson(doc, output);
+        server.send(200, "application/json", output);
+    }
+}
+
+
 
 //Public Init Function
 void initWebServer()
@@ -86,16 +146,15 @@ void initWebServer()
 
     //Define Routes
     server.on("/api/robot/move", HTTP_POST, handleMove);
+    server.on("/api/robot/upload", HTTP_POST, handleUpload);
+    server.on("/api/robot/start", HTTP_POST, handleStartGrid);
+    server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
+    server.on("/api/robot/data", HTTP_GET, handleGetData);
     server.onNotFound(handleFileRequest);
 
     //Start Server
     server.begin();
     Serial.println("HTTP server started");
-
-    //Handle Grid Upload/Run/Stop
-    server.on("/api/robot/upload", HTTP_POST, handleUpload);
-    server.on("/api/robot/start", HTTP_POST, handleStartGrid);
-    server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
 }
 
 void handleClient()

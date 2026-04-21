@@ -1,5 +1,10 @@
 #pragma once
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+
+struct RPMTarget { float left; float right; };
 
 void initUART();
-void uart_send_targets(float leftRPM, float rightRPM);
-bool uart_receive_telemetry(long* ticksL, long* ticksR);
+void uart_enqueue_targets(float leftRPM, float rightRPM); // called from Core 0
+void uart_flush_targets();                                 // called from Core 1
+bool uart_receive_telemetry(long* ticksL, long* ticksR);  // called from Core 1
