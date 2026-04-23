@@ -176,6 +176,11 @@ void handleUpload()
     float len = doc["length"];
     float width = doc["width"];
     int passes = doc["passes"];
+    if (passes < 1 || passes > MAX_GRID_PASSES)
+    {
+        server.send(400, "application/json", "{\"error\":\"passes out of range\"}");
+        return;
+    }
     String dir = doc["direction"];
 
     configureGrid(len, width, passes, (dir == "right"));

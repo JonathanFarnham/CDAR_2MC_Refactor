@@ -181,6 +181,7 @@ void handleGrid()
         while (millis() - brakeTimer < 200)
         {
             updateMPU();
+            updateDriveSystem(); //Flush Queue and Read Telemetry
             delay(1);
         }
         resetTickCount();
@@ -196,7 +197,13 @@ void handleGrid()
                 {
                     // Lift wheel before turning, give servo time to reach position
                     wheelUp();
-                    delay(400);
+                    brakeTimer = 400;
+                    while (millis() - brakeTimer < 400)
+                    {
+                        updateMPU();
+                        updateDriveSystem();
+                        delay(1);
+                    }
 
                     currentState = TURNING_1;
                     if (current_turn_right)
@@ -238,7 +245,13 @@ void handleGrid()
             case TURNING_2:
                 // Lower wheel after final turn, give servo time before driving
                 wheelDown();
-                delay(400);
+                brakeTimer = 400;
+                while (millis() - brakeTimer < 400)
+                {
+                    updateMPU();
+                    updateDriveSystem();
+                    delay(1);
+                }
 
                 currentState = DRIVING_LONG;
                 current_pass++;
