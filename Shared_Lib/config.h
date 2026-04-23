@@ -20,7 +20,7 @@
 #define ADS1220_CS_PIN 2
 #define ADS1220_DRDY_PIN 34
 #define ADS1220_SCK_PIN 14
-#define ADS1220_MISO_PIN 12
+#define ADS1220_MISO_PIN 19
 #define ADS1220_MOSI_PIN 13
 
 //Motor Pin Setup (Brawn Only)

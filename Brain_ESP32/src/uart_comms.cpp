@@ -9,7 +9,7 @@ void initUART()
 {
     Serial2.begin(UART_BAUD_RATE, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN);
     Serial2.setTimeout(10);
-    target_queue = xQueueCreate(4, sizeof(RPMTarget));
+    target_queue = xQueueCreate(1, sizeof(RPMTarget));
 }
 
 // Called from Core 0 (web task) — only touches the queue, never Serial2
