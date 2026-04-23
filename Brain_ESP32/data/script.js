@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let selectedTurn = "left";
         let lastDataJSON = "";     // Cache — only re-render on actual changes
         let pollTimer    = null;
+        let pollInterval = 0;
         let generator    = null;   // ContourMapGenerator instance
 
         /* ------------------------------------------------------------------
@@ -110,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function stopPolling() {
-            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; pollInterval = 0; }
         }
 
         function poll() {
