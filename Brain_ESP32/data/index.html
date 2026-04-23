@@ -55,6 +55,30 @@
                 </div>
             </section>
 
+            <section class="box">
+                <h3>Contour Settings</h3>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="contour-min">Min (mV)</label>
+                        <input type="number" id="contour-min" value="-350">
+                    </div>
+                    <div class="input-group">
+                        <label for="contour-max">Max (mV)</label>
+                        <input type="number" id="contour-max" value="-50">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="show-data-pts">
+                        Show Data Point Labels
+                    </label>
+                </div>
+                <div class="input-group">
+                    <span>Run Status: </span>
+                    <span id="run-status">Idle</span>
+                </div>
+            </section>
+
             <div class="action-buttons">
                 <button id="upload-btn" class="btn-primary">Upload to Robot</button>
                 <button id="run-btn" class="btn-success">Run Grid</button>

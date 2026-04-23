@@ -244,6 +244,8 @@ void handleGrid()
                 current_pass++;
                 current_turn_right = !current_turn_right;
                 target_ticks = grid_len_ft * TICKS_PER_FOOT;
+                current_sample_count = 0;
+                last_sample_ticks = 0;
                 setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
                 break;
 

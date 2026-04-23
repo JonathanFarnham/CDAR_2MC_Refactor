@@ -36,6 +36,14 @@
 #define ENCODER_RIGHT_A 25
 #define ENCODER_RIGHT_B 26
 
+//Spool Pin Definitions
+#define MOTOR_SPOOL_EN 19
+#define MOTOR_SPOOL_IN1 18
+#define MOTOR_SPOOL_IN2 23
+#define ENCODER_SPOOL_A 4
+#define ENCODER_SPOOL_B 5
+#define SPOOL_SERVO 15
+
 
 //Physics and Encoder Settings
 #define COUNTS_PER_REV 28

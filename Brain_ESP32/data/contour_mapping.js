@@ -12,7 +12,7 @@
 
 class ContourMapGenerator
 {
-    constructo(options = {})
+    constructor(options = {})
     {
         this.gridSize = options.gridSize || 1;
         this.contourMin = options.contourMin !== undefined ? options.contourMin : -350;
@@ -38,7 +38,7 @@ class ContourMapGenerator
         const newRows = (rows - 1) * f + 1;
         const newCols = (cols - 1) * f + 1;
 
-        const out = Array.from({ length: newRows }, () => new Float32Array(newColumns));
+        const out = Array.from({ length: newRows }, () => new Float32Array(newCols));
 
         for (let i = 0; i < newRows; i++)
         {
@@ -87,8 +87,7 @@ class ContourMapGenerator
 
     getContourColorscale()
     {
-        return 
-        [
+        return [
             [0,     'rgb(127, 0, 0)'],
             [0.125, 'rgb(255, 0, 0)'],
             [0.25,  'rgb(255, 127, 0)'],
@@ -98,13 +97,12 @@ class ContourMapGenerator
             [0.75,  'rgb(0, 127, 255)'],
             [0.875, 'rgb(0, 0, 255)'],
             [1,     'rgb(0, 0, 127)']
-        ]
+        ];
     }
 
-    getGradientColorscale() 
+    getGradientColorscale()
     {
-        return 
-        [
+        return [
             [0,     'rgb(0, 0, 127)'],
             [0.125, 'rgb(0, 0, 255)'],
             [0.25,  'rgb(0, 127, 255)'],
@@ -139,7 +137,7 @@ class ContourMapGenerator
         // matching the orientation of the company's Plotly version (y-axis origin at bottom).
         const flippedData = [...data].reverse();
 
-        const highRes = this.interpolationAndSmooth(flippedData);
+        const highRes = this.interpolateAndSmooth(flippedData);
         const hiRows = highRes.length;
         const hiCols = highRes[0].length;
 
@@ -155,7 +153,7 @@ class ContourMapGenerator
             for (let px = 0; px < W; px++)
             {
                 const dataCol = Math.min(hiCols - 1, Math.floor(px * hiCols / W));
-                const [r, g, b] = this._valueToRGB(rowData[dataCol], this.contourMin, this.countourMax, colorscale);
+                const [r, g, b] = this._valueToRGB(rowData[dataCol], this.contourMin, this.contourMax, colorscale);
                 const idx = (py * W + px) * 4;
                 pix[idx] = r;
                 pix[idx + 1] = g;
@@ -168,7 +166,7 @@ class ContourMapGenerator
 
         if (options.showDataPoints)
         {
-            this._drawnDataLabels(ctx, data, flippedData, highRes, W, H);
+            this._drawDataLabels(ctx, data, flippedData, highRes, W, H);
         }
 
         //Title
@@ -294,185 +292,4 @@ class ContourMapGenerator
                 contours: {
                     start: this.contourMin, end: this.contourMax,
                     size: (this.contourMax - this.contourMin) / 20,
-                    coloring: 'none', showlabels: true,
-                    labelfont: { size: 8, color: 'black' }
-                },
-                line: { color: 'black', width: 0.5 },
-                zmin: this.contourMin, zmax: this.contourMax
-            });
-        }
- 
-        const layout = {
-            title: { text: 'Contour Map: ' + tableName, y: 0.98, yanchor: 'top' },
-            xaxis: { title: { text: 'X Position' }, showgrid: false },
-            yaxis: { title: { text: 'Y Position' }, showgrid: false, scaleanchor: 'x' },
-            autosize: true, margin: { t: 60, b: 80, l: 60, r: 120 }
-        };
- 
-        if (showDataPoints) {
-            const annotations = [];
-            const xOrig = Array.from({ length: cols }, (_, i) => i * width  / (cols - 1));
-            const yOrig = Array.from({ length: rows }, (_, i) => i * height / (rows - 1));
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < cols; j++) {
-                    const value    = flippedData[i][j];
-                    const hiI      = Math.floor(i * (highResRows - 1) / (rows - 1));
-                    const hiJ      = Math.floor(j * (highResCols - 1) / (cols - 1));
-                    const zVal     = highResData[hiI][hiJ];
-                    const txtColor = zVal < (this.contourMax + this.contourMin) / 2 ? 'white' : 'black';
-                    annotations.push({
-                        x: xOrig[j], y: yOrig[i], text: String(value.toFixed(0)),
-                        showarrow: false, font: { color: txtColor, size: 10, weight: 'bold' }
-                    });
-                }
-            }
-            layout.annotations = annotations;
-        }
- 
-        await Plotly.newPlot(containerDiv, traces, layout, {
-            responsive: true,
-            toImageButtonOptions: { format: 'png', filename: 'contour_' + tableName, scale: 2 }
-        });
- 
-        return {
-            exportImage: async () => Plotly.toImage(containerDiv, { format: 'png', width: 1600, height: 1200 })
-        };
-    }
- 
-    async generateGradientMap(data, containerDiv, options = {}) {
-        if (typeof Plotly === 'undefined') {
-            console.warn('Plotly is not loaded. Use renderGradientToCanvas() instead.');
-            return;
-        }
- 
-        const tableName = options.tableName || 'Data';
-        const gradient  = this.computeGradients(data);
-        const flipped   = [...gradient].reverse();
-        const highRes   = this.interpolateAndSmooth(flipped);
-        const rows = highRes.length, cols = highRes[0].length;
-        const width = cols * this.gridSize, height = rows * this.gridSize;
-        const x = Array.from({ length: cols }, (_, i) => i * width  / (cols - 1));
-        const y = Array.from({ length: rows }, (_, i) => i * height / (rows - 1));
- 
-        const tickInterval = 50;
-        const tickStart    = Math.floor(this.gradientMin / tickInterval) * tickInterval;
-        const tickEnd      = Math.ceil(this.gradientMax  / tickInterval) * tickInterval;
-        const tickVals = [], tickTexts = [];
-        for (let t = tickStart; t <= tickEnd; t += tickInterval) { tickVals.push(t); tickTexts.push(String(t)); }
- 
-        await Plotly.newPlot(containerDiv, [{
-            type: 'heatmap', x, y,
-            z: Array.from(highRes, r => Array.from(r)),
-            colorscale: this.getGradientColorscale(),
-            colorbar: {
-                title: { text: 'Gradient Values (mV)', side: 'right' },
-                tickmode: 'array', tickvals: tickVals, ticktext: tickTexts
-            },
-            zmin: this.gradientMin, zmax: this.gradientMax, zsmooth: 'best'
-        }], {
-            title: 'Gradient Map: ' + tableName,
-            xaxis: { title: { text: 'X Position' }, showgrid: false },
-            yaxis: { title: { text: 'Y Position' }, showgrid: false, scaleanchor: 'x' },
-            autosize: true, margin: { t: 60, b: 80, l: 60, r: 120 }
-        }, { responsive: true });
-    }
- 
-    /* ======================================================================
-     * LEGEND HELPER  (called by script.js to update the HTML legend bar)
-     * ====================================================================== */
- 
-    /**
-     * buildLegendHTML(barEl, labelsEl)
-     *
-     * Populates the existing #legend-bar and #legend-labels elements with
-     * colour swatches and mV labels that match the canvas colorscale.
-     */
-    buildLegendHTML(barEl, labelsEl) {
-        if (!barEl || !labelsEl) return;
-        const steps = this.getContourColorscale();
-        barEl.innerHTML    = '';
-        labelsEl.innerHTML = '';
- 
-        steps.forEach(([pos, color]) => {
-            const block = document.createElement('div');
-            block.style.cssText = `flex:1; background:${color};`;
-            barEl.appendChild(block);
- 
-            const label = document.createElement('span');
-            const mv    = this.contourMin + pos * (this.contourMax - this.contourMin);
-            label.innerText = mv.toFixed(0);
-            labelsEl.appendChild(label);
-        });
-    }
- 
-    /* ======================================================================
-     * PRIVATE HELPERS
-     * ====================================================================== */
- 
-    // Parses 'rgb(r, g, b)' → [r, g, b]
-    _parseRGB(str) {
-        const m = str.match(/rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)/);
-        return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
-    }
- 
-    // Maps a scalar value to an [r,g,b] triplet via piecewise linear interpolation
-    // through the provided colorscale stops.
-    _valueToRGB(value, min, max, colorscale) {
-        const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
- 
-        for (let i = 0; i < colorscale.length - 1; i++) {
-            const [p0, c0] = colorscale[i];
-            const [p1, c1] = colorscale[i + 1];
-            if (t >= p0 && t <= p1) {
-                const f        = (p1 === p0) ? 0 : (t - p0) / (p1 - p0);
-                const [r0,g0,b0] = this._parseRGB(c0);
-                const [r1,g1,b1] = this._parseRGB(c1);
-                return [
-                    Math.round(r0 + (r1 - r0) * f),
-                    Math.round(g0 + (g1 - g0) * f),
-                    Math.round(b0 + (b1 - b0) * f)
-                ];
-            }
-        }
-        return this._parseRGB(colorscale[colorscale.length - 1][1]);
-    }
- 
-    _drawPlaceholder(canvas, message) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle    = '#f1f5f9';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle    = '#94a3b8';
-        ctx.font         = '16px system-ui, sans-serif';
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(message, canvas.width / 2, canvas.height / 2);
-        ctx.textAlign    = 'start';
-        ctx.textBaseline = 'alphabetic';
-    }
- 
-    _drawDataLabels(ctx, rawData, flippedData, highRes, W, H) {
-        const rows    = flippedData.length,   cols    = flippedData[0].length;
-        const hiRows  = highRes.length,        hiCols  = highRes[0].length;
-        const midVal  = (this.contourMin + this.contourMax) / 2;
- 
-        ctx.font      = 'bold 11px Arial, sans-serif';
-        ctx.textAlign = 'center';
- 
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < cols; j++) {
-                const hiI    = Math.floor(i * (hiRows - 1) / (rows - 1));
-                const hiJ    = Math.floor(j * (hiCols - 1) / (cols - 1));
-                const zVal   = highRes[hiI][hiJ];
-                const px     = Math.round(j * W / (cols - 1));
-                const py     = Math.round(i * H / (rows - 1));
-                const text   = flippedData[i][j].toFixed(0);
- 
-                ctx.fillStyle = zVal < midVal ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.9)';
-                ctx.fillText(text, px, py);
-            }
-        }
-        ctx.textAlign = 'start';
-    }
-
-}
+                    coloring:

@@ -107,7 +107,7 @@ void handleGetData()
         }
         else
         {
-            for (int s = 0; s , samplesInPass; s++)
+            for (int s = 0; s < samplesInPass; s++)
             {
                 row.add(getGridReading(p, s));
             }
@@ -120,11 +120,10 @@ void handleGetData()
         {
             row.add(padValue);
         }
-
-        String output;
-        serializeJson(doc, output);
-        server.send(200, "application/json", output);
     }
+    String output;
+    serializeJson(doc, output);
+    server.send(200, "application/json", output);
 }
 
 

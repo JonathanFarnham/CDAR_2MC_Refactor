@@ -2,7 +2,6 @@
 #include "config.h"
 #include <Arduino.h>
 
-// Queue depth of 4 is sufficient — Core 1 drains it every loop iteration
 static QueueHandle_t target_queue = nullptr;
 
 void initUART()
