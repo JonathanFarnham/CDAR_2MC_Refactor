@@ -129,7 +129,7 @@ void updateSpoolControl()
 
     //integrate encoder delta into wire pay out estimate
     long current_ticks;
-    noInterrupets();
+    noInterrupts();
     current_ticks = spool_ticks;
     interrupts();
 
@@ -166,10 +166,10 @@ void updateSpoolControl()
     }
 
     //safety -> Dont try to unspool past empty
-    if (wraps_in_spool <= 0.0f && error_mm > 0)
+    if (wraps_on_spool <= 0.0f && error_mm > 0)
     {
         setSpoolMotor(0);
-        Serial.println("SPOOL EMPTY")
+        Serial.println("SPOOL EMPTY");
         return;
     }
     //safety -> dont reel in past the core
@@ -179,6 +179,9 @@ void updateSpoolControl()
         Serial.println("SPOOL FULL");
         return;
     }
+
+    int pwm = (int)(error_mm * POS_KP);
+    setSpoolMotor(pwm);
 }
 
 //Telemetry Getters

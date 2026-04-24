@@ -5,12 +5,12 @@
 namespace SpoolConfig
 {
     //Wire Parameters
-    constexpr WIRE_DIAMETER_MM = 1.60f;
-    constexpr WIRE_RADIUS_MM = WIRE_DIAMETER_MM / 2.0f;
+    constexpr float WIRE_DIAMETER_MM = 1.60f;
+    constexpr float WIRE_RADIUS_MM = WIRE_DIAMETER_MM / 2.0f;
 
     //Spool Parameters
     constexpr float SPOOL_CORE_RADIUS_MM = 15.0f; //Drum Radius (no wire)
-    constexpr SPOOL_USABLE_WIDTH_MM = 40.0f; //width of the spool drum (will define how many wraps per layer occur)
+    constexpr float SPOOL_USABLE_WIDTH_MM = 40.0f; //width of the spool drum (will define how many wraps per layer occur)
     constexpr int MAX_LAYERS = 30;
 
     //Starting State

@@ -5,9 +5,9 @@
 //Latest Buffers for each message type
 static float buf_targetL = 0.0f;
 static float buf_targetR = 0.0f;
-static bool bof_target_fresh = false;
+static bool bff_target_fresh = false;
 
-static float bud_spool_mm = 0.0f;
+static float buf_spool_mm = 0.0f;
 static bool buf_spool_fresh = false;
 
 void initUART() 
@@ -16,7 +16,7 @@ void initUART()
     Serial2.setTimeout(10);
 }
 
-/ Drains the UART buffer once per call. Any complete '\n'-terminated message
+//Drains the UART buffer once per call. Any complete '\n'-terminated message
 // is parsed and stashed in the appropriate static buffer. Multiple messages
 // in one call are all processed; only the most recent of each type is kept.
 static void drain_and_parse()

@@ -4,6 +4,7 @@
 #include "drive_system.h"
 #include "uart_comms.h"
 #include "motor_hardware.h" // Needed to get the raw ticks to send back
+#include "spool_control.h"
 
 unsigned long lastTelemetryTime = 0;
 const int TELEMETRY_INTERVAL = 20;
