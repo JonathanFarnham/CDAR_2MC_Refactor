@@ -224,6 +224,12 @@ void handleStopGrid()
 //Zero all stored grid readings so the next /data poll returns an empty set.
 void handleClearData()
 {
+    if (isGridRunning())
+    {
+        server.send(409, "application/json"),
+            "{\"error\":\"Cannot clear while grid is running\"}");
+        return;
+    }
     clearGridData();
     server.send(200, "application/json", "{\"status\":\"cleared\"}");
 }

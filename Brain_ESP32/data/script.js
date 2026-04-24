@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (tableBody.querySelector('.empty-msg')) tableBody.innerHTML = '';
 
             // Only rebuild the table if the data actually changed
-            const dataKey = JSON.stringify({ passes: response.passes, samples: response.samplesPerPass });
+            const dataKey = response.data.map(row => row.length).join(',') + '|' + response.passes;
             if (dataKey !== lastDataJSON) {
                 lastDataJSON = dataKey;
                 tableBody.innerHTML = '';
@@ -107,17 +107,24 @@ document.addEventListener("DOMContentLoaded", () => {
         /* ------------------------------------------------------------------
          * Poll /api/robot/data at the given interval (ms)
          * ------------------------------------------------------------------ */
+        let pollIntervalMs = 0;
+
         function startPolling(intervalMs) {
+            if (pollIntervalMs === intervalMs) return;  // already polling at this rate
             stopPolling();
-            poll(); // Immediate first fetch
+            pollIntervalMs = intervalMs;
+            poll();
             pollTimer = setInterval(poll, intervalMs);
         }
 
         function stopPolling() {
-            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; pollInterval = 0; }
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            pollIntervalMs = 0;
         }
 
         function poll() {
+            const target = response.isRunning ? 2000 : 5000;
+            if (pollIntervalMS !== target) startPolling(target);
             fetch('/api/robot/data')
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
                 .then(response => {
