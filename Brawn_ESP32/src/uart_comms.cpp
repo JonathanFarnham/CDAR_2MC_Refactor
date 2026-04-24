@@ -5,7 +5,7 @@
 //Latest Buffers for each message type
 static float buf_targetL = 0.0f;
 static float buf_targetR = 0.0f;
-static bool bff_target_fresh = false;
+static bool buf_target_fresh = false;
 
 static float buf_spool_mm = 0.0f;
 static bool buf_spool_fresh = false;
