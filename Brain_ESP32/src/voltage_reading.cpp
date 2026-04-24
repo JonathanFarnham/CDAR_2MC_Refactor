@@ -151,7 +151,7 @@ float readHalfCellPotential_mV()
 
     if (valid == 0)
     {
-        Serial.println("ADS1220: all reads failed")
+        Serial.println("ADS1220: all reads failed");
         return -9999.0f;
     }
 
