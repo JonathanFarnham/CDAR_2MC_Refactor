@@ -8,3 +8,5 @@ void handleClient(); //called in main loop
 void handleUpload();
 void handleStartGrid();
 void handleStopGrid();
+void handleClearData();
+void handleTelemetry();

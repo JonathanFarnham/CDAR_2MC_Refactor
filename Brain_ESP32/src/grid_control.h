@@ -5,6 +5,7 @@ void startGridRun();
 void stopGridRun();
 void handleGrid();
 bool isGridRunning();
+void clearGridData();
 
 //Grid Data Access for web_server.cpp to build the /api/robot/data response
 int getCompletedPasses();

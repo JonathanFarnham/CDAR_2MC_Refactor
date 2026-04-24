@@ -35,8 +35,12 @@ const int HEADING_SEND_INTERVAL = 100;
 bool isAutoPilotActive = false;
 
 // State Machine Variables
-enum State { IDLE, DRIVING_LONG, TURNING_1, DRIVING_SHORT, TURNING_2, FINISHED };
+enum State { IDLE, BRAKING, SERVO_LIFTING, SERVO_LOWERING, DRIVING_LONG, TURNING_1, DRIVING_SHORT, TURNING_2, FINISHED };
 State currentState = IDLE;
+
+//Non Blocking Timer used by Braking and Servo Lift Lower States
+unsigned long stateWaitStart = 0;
+State stateAfterWait = IDLE; //Defines where to transistion after waiting
 
 int current_pass = 0;
 long target_ticks = 0;
@@ -89,6 +93,18 @@ void stopGridRun()
     Serial.println("Grid Stopped");
 }
 
+//Clear Data Function
+void clearGridData()
+{
+    memset(grid_readings, 0, sizeof(grid_readings));
+    memset(samples_per_pass, 0, sizeof(samples_per_pass));
+    total_completed_passes = 0;
+    current_sample_count = 0;
+    last_sample_ticks = 0;
+    Serial.println("Grid Data Cleared by User Request");
+
+}
+
 bool isGridRunning()
 {
     return isAutoPilotActive;
@@ -121,8 +137,101 @@ void handleGrid()
         return;
     }
 
+    if (currentState == BRAKING)
+    {
+        if (millis() - stateWaitStart >= 200)
+        {
+            resetTickCount();
+            currentState = stateAfterWait;
+ 
+            // Kick off the next phase on transition
+            switch (currentState)
+            {
+                case SERVO_LIFTING:
+                    // End of a long pass that isnt the last —> lift wheel
+                    wheelUp();
+                    stateWaitStart = millis(); // begin 400 ms servo-up wait
+                    break;
+ 
+                case DRIVING_SHORT:
+                    // End of TURNING_1 —> drive the spacing between passes
+                    {
+                        float spacing = (total_passes > 1)
+                            ? (grid_width_ft / (total_passes - 1))
+                            : grid_width_ft;
+                        target_ticks = spacing * TICKS_PER_FOOT;
+                        setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
+                    }
+                    break;
+ 
+                case TURNING_2:
+                    // End of DRIVING_SHORT —> second 90 turn
+                    if (current_turn_right)
+                    {
+                        target_heading -= 90.0;
+                        setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
+                    }
+                    else
+                    {
+                        target_heading += 90.0;
+                        setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
+                    }
+                    break;
+ 
+                case SERVO_LOWERING:
+                    // End of TURNING_2 —> lower wheel before the next long pass
+                    wheelDown();
+                    stateWaitStart = millis(); // begin 400 ms servo-down wait
+                    break;
+ 
+                case FINISHED:
+                    // End of the last long pass —> grid complete
+                    stopGridRun();
+                    currentState = IDLE;
+                    break;
+ 
+                default:
+                    break;
+            }
+        }
+        return;
+    }
+ 
+    if (currentState == SERVO_LIFTING)
+    {
+        if (millis() - stateWaitStart >= 400)
+        {
+            currentState = TURNING_1;
+            if (current_turn_right)
+            {
+                target_heading -= 90.0;
+                setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
+            }
+            else
+            {
+                target_heading += 90.0;
+                setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
+            }
+        }
+        return;
+    }
+    if (currentState == SERVO_LOWERING)
+    {
+        if (millis() - stateWaitStart >= 400)
+        {
+            currentState = DRIVING_LONG;
+            current_pass++;
+            current_turn_right = !current_turn_right;
+            target_ticks = grid_len_ft * TICKS_PER_FOOT;
+            current_sample_count = 0;
+            last_sample_ticks = 0;
+            setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
+        }
+        return;
+    }
+ 
     bool targetReached = false;
-
+ 
     // Movement and Heading Logic
     if (currentState == DRIVING_LONG || currentState == DRIVING_SHORT)
     {
@@ -135,33 +244,42 @@ void handleGrid()
         {
             if (millis() - lastHeadingSendTime >= HEADING_SEND_INTERVAL)
             {
+                lastHeadingSendTime = millis();
                 float headingError = target_heading - getYawAngle();
-
+ 
                 float heading_Kp = 5.0;
                 float rpmCorrection = headingError * heading_Kp;
                 rpmCorrection = constrain(rpmCorrection, -40, 40);
-
+ 
                 setTargetRPM(SPEED_GRID_RPM - rpmCorrection,
                              SPEED_GRID_RPM + rpmCorrection);
             }
-
-            //Electrod Sampling - one reading every TICKS_PER_FOOT during long passes
+ 
+            //Electrode Sampling-> one reading every TICKS_PER_FOOT during long passes
             if (currentState == DRIVING_LONG && current_dist >= last_sample_ticks + TICKS_PER_FOOT && current_sample_count < MAX_GRID_SAMPLES)
             {
                last_sample_ticks = current_dist;
                
                int passIdx = current_pass - 1;
                float mv = readHalfCellPotential_mV();
-               grid_readings[passIdx][current_sample_count] = mv;
-               samples_per_pass[passIdx] = ++current_sample_count;
-
-               //Keep total completed passes up to date so the API can return
-               //live data while the run is still in progress
-               if (current_pass > total_completed_passes)
+ 
+               //Skip storing failed readings rather than recording 0 mV which maps to "Low Risk" and corrupts the heatmap.
+               if (mv > -9000.0f)
                {
-                total_completed_passes = current_pass;
+                   grid_readings[passIdx][current_sample_count] = mv;
+                   samples_per_pass[passIdx] = ++current_sample_count;
+ 
+                   if (current_pass > total_completed_passes)
+                       total_completed_passes = current_pass;
+ 
+                   Serial.printf("Pass %d | Sample %d | %.2f mV (%s)\n",
+                       current_pass, current_sample_count, mv, getASTMRiskLabel(mv));
                }
-               Serial.printf("Pass %d | Sample %d | %.2f mV (%s)\n", current_pass, current_sample_count, mv, getASTMRiskLabel(mv));
+               else
+               {
+                   Serial.printf("Pass %d | Sample %d | SENSOR ERROR — skipped\n",
+                       current_pass, current_sample_count);
+               }
             }
         }
     }
@@ -172,98 +290,44 @@ void handleGrid()
         if (degreesRemaining <= 4.0)
             targetReached = true;
     }
-
+ 
     // State Transition Logic
+    // Every movement state brakes before the next phase so momentum bleeds off.
+    // Decide stateAfterWait based on which state triggered the target, then
+    // switch into BRAKING. The BRAKING exit sets up the next state.
     if (targetReached)
     {
-        stopAll();
-        unsigned long brakeTimer = millis();
-        while (millis() - brakeTimer < 200)
-        {
-            updateMPU();
-            updateDriveSystem(); //Flush Queue and Read Telemetry
-            delay(1);
-        }
-        resetTickCount();
-
         switch (currentState)
         {
             case DRIVING_LONG:
-                if (current_pass >= total_passes)
-                {
-                    currentState = FINISHED;
-                }
-                else
-                {
-                    // Lift wheel before turning, give servo time to reach position
-                    wheelUp();
-                    brakeTimer = 400;
-                    while (millis() - brakeTimer < 400)
-                    {
-                        updateMPU();
-                        updateDriveSystem();
-                        delay(1);
-                    }
-
-                    currentState = TURNING_1;
-                    if (current_turn_right)
-                    {
-                        target_heading -= 90.0;
-                        setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
-                    }
-                    else
-                    {
-                        target_heading += 90.0;
-                        setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
-                    }
-                }
+                // End of a long pass — last pass finishes, all others turn
+                stateAfterWait = (current_pass >= total_passes) ? FINISHED
+                                                                : SERVO_LIFTING;
                 break;
-
+ 
             case TURNING_1:
-                currentState = DRIVING_SHORT;
-                {
-                    float spacing = grid_width_ft / (total_passes - 1);
-                    target_ticks = spacing * TICKS_PER_FOOT;
-                    setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
-                }
+                // End of first 90° turn — drive the short inter-pass distance
+                stateAfterWait = DRIVING_SHORT;
                 break;
-
+ 
             case DRIVING_SHORT:
-                currentState = TURNING_2;
-                if (current_turn_right)
-                {
-                    target_heading -= 90.0;
-                    setTargetRPM(SPEED_TURN_RPM, -SPEED_TURN_RPM);
-                }
-                else
-                {
-                    target_heading += 90.0;
-                    setTargetRPM(-SPEED_TURN_RPM, SPEED_TURN_RPM);
-                }
+                // End of short inter-pass drive — second 90° turn
+                stateAfterWait = TURNING_2;
                 break;
-
+ 
             case TURNING_2:
-                // Lower wheel after final turn, give servo time before driving
-                wheelDown();
-                brakeTimer = 400;
-                while (millis() - brakeTimer < 400)
-                {
-                    updateMPU();
-                    updateDriveSystem();
-                    delay(1);
-                }
-
-                currentState = DRIVING_LONG;
-                current_pass++;
-                current_turn_right = !current_turn_right;
-                target_ticks = grid_len_ft * TICKS_PER_FOOT;
-                current_sample_count = 0;
-                last_sample_ticks = 0;
-                setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
+                // End of second turn — lower wheel before the next long pass
+                stateAfterWait = SERVO_LOWERING;
                 break;
-
+ 
             default:
-                break;
+                // Shouldn't happen — targetReached is only set by the four
+                // movement states above. Fall through without braking.
+                return;
         }
+ 
+        stopAll();
+        stateWaitStart = millis(); // start the non-blocking brake timer
+        currentState = BRAKING;
     }
 }

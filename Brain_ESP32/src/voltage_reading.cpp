@@ -149,7 +149,11 @@ float readHalfCellPotential_mV()
         }
     }
 
-    if (valid == 0) return 0.0f;
+    if (valid == 0)
+    {
+        Serial.println("ADS1220: all reads failed")
+        return -9999.0f;
+    }
 
     float avg_code = (float)(accumulator / valid);
     return avg_code * ADS1220_LSB_MV;

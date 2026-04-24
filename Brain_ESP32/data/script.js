@@ -36,9 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
          * ASTM risk label (mirrors getASTMRiskLabel() in electrode_sensor.cpp)
          * ------------------------------------------------------------------ */
         function astmLabel(mv) {
-            if (mv < -500)  return "Severe Corrosion";
-            if (mv < -350)  return "High Probability of Active Corrosion (>90%)";
-            if (mv <= -200) return "Intermediate Corrosion Risk";
+            // Fix 3: firmware returns -9999 when all ADC reads fail. Without this
+            // check a broken sensor would show "Low Probability of Corrosion".
+            if (mv <= -9000)  return "⚠️ SENSOR ERROR";
+            if (mv < -500)    return "Severe Corrosion";
+            if (mv < -350)    return "High Probability of Active Corrosion (>90%)";
+            if (mv <= -200)   return "Intermediate Corrosion Risk";
             return "Low Probability of Corrosion (<10%)";
         }
 
@@ -71,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Data table — rebuild whenever data changes
             if (tableBody.querySelector('.empty-msg')) tableBody.innerHTML = '';
 
-            // Only rebuild the table if the data actually changed (avoid flicker)
+            // Only rebuild the table if the data actually changed
             const dataKey = JSON.stringify({ passes: response.passes, samples: response.samplesPerPass });
             if (dataKey !== lastDataJSON) {
                 lastDataJSON = dataKey;
@@ -147,8 +150,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     setTimeout(() => el.classList.remove('error-shake'), 600);
                 }
             });
-            if (!isValid) alert("Please fill in all highlighted fields.");
-            return isValid;
+            if (!isValid) {
+                alert("Please fill in all highlighted fields.");
+                return false;
+            }
+
+            //Warn if Grid to large for max sample
+            const len = parseFloat(document.getElementById('length').value);
+            if (len > 50) {
+                return confirm(
+                    `Warning: the grid length of ${len} ft exceeds the 50 ft sampling limit.\n\n` +
+                    `The robot will finish the pass, but no readings will be recorded ` +
+                    `beyond the first 50 ft of each pass.\n\nContinue anyway?`
+                );
+            }
+            return true;
         }
 
         /* ------------------------------------------------------------------
@@ -207,17 +223,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         document.getElementById('show-data-pts').addEventListener('change', poll);
 
-        // Clear data
+        //Clear data
+        //also tell the ESP32 to zero its stored readings
         document.getElementById('clear-data-btn').onclick = () => {
-            if (confirm("Clear all data and reset display?")) {
+            if (confirm("Clear all data on the robot and reset the display?")) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 tableBody.innerHTML = '<tr><td colspan="4" class="empty-msg">No data recorded.</td></tr>';
                 lastDataJSON = "";
                 if (runStatus) runStatus.textContent = 'Idle';
+
+                fetch('/api/robot/clear', { method: 'POST' })
+                    .catch(err => console.error("Failed to clear robot data:", err));
             }
         };
 
-        // Export CSV
+        //Export CSV
         document.getElementById('export-csv').onclick = () => {
             fetch('/api/robot/data')
                 .then(r => r.json())
@@ -236,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         };
 
-        // Export PNG
+        //Export PNG
         document.getElementById('export-png').onclick = () => {
             const a    = document.createElement('a');
             a.href     = canvas.toDataURL("image/png");
@@ -244,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
             a.click();
         };
 
-        // Upload configuration to robot
+        //Upload configuration to robot
         document.getElementById('upload-btn').onclick = () => {
             if (!validateInputs()) return;
             const payload = {
@@ -260,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }).then(() => alert("Configuration uploaded to robot!"));
         };
 
-        // Start grid run
+        //Start grid run
         document.getElementById('run-btn').onclick = () => {
             fetch('/api/robot/start', { method: 'POST' })
                 .then(() => startPolling(2000)); // Poll aggressively while running
@@ -280,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ========================================================================
-     * MANUAL CONTROL PAGE  (unchanged from original)
+     * MANUAL CONTROL PAGE
      * ====================================================================== */
     if (isManualPage) {
         const logDisplay  = document.getElementById('command-log');
@@ -361,5 +381,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 sendCommand("STOP");
             }
         });
+
+        //Poll /api/robot/telemetry every 500 ms so the encoder counters and connection status indicator on the manual page are actually live
+        const encLeft    = document.getElementById('enc-left');
+        const encRight   = document.getElementById('enc-right');
+        const connStatus = document.getElementById('connection-status');
+        let   missedPolls = 0;
+        const MAX_MISSED  = 3;
+
+        function pollTelemetry() {
+            fetch('/api/robot/telemetry')
+                .then(res => {
+                    if (!res.ok) throw new Error(res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    missedPolls = 0;
+                    if (connStatus) {
+                        connStatus.innerText   = "Connected";
+                        connStatus.style.color = "#16a34a";
+                    }
+                    if (encLeft  && data.ticksL !== undefined) encLeft.innerText  = data.ticksL;
+                    if (encRight && data.ticksR !== undefined) encRight.innerText = data.ticksR;
+                })
+                .catch(() => {
+                    missedPolls++;
+                    if (missedPolls >= MAX_MISSED && connStatus) {
+                        connStatus.innerText   = "Disconnected";
+                        connStatus.style.color = "#ef4444";
+                    }
+                });
+        }
+
+        setInterval(pollTelemetry, 500);
+        pollTelemetry(); // immediate first fetch
     }
 });

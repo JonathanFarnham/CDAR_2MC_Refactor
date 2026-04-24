@@ -36,7 +36,7 @@ void handleFileRequest()
 void handleMove()
 {
     Serial.println("Received move request");
-    //Safety Check- ignore manual commands if grid is running
+    //Safety Check ignore manual commands if grid is running
     if (isGridRunning())
     {
         server.send(409, "application/json", "{\"error\":\"Robot is in AutoPilot Mode. Stop grid first.\"}");
@@ -58,13 +58,19 @@ void handleMove()
     }
 
     int speedRPM = doc["speed"] | 300; // Defaulting to 300 RPM
-    const char* cmd = doc["direction"];
+    //fall back to "" when "direction" is missing so strcmp doesn't dereference a null pointer
+    const char* cmd = doc["direction"] | "";
 
     if (strcmp(cmd, "FORWARD") == 0) setTargetRPM(speedRPM, speedRPM);
     else if (strcmp(cmd, "BACKWARD") == 0) setTargetRPM(-speedRPM, -speedRPM);
     else if (strcmp(cmd, "LEFT") == 0) setTargetRPM(-speedRPM, speedRPM);
     else if (strcmp(cmd, "RIGHT") == 0) setTargetRPM(speedRPM, -speedRPM);
     else if (strcmp(cmd, "STOP") == 0) stopAll();
+    else
+    {
+        server.send(400, "application/json", "{\"error\":\"Unknown or missing direction\"}");
+        return;
+    }
 
     server.send(200, "application/json", "{\"status\":\"success\"}");
 }
@@ -72,10 +78,10 @@ void handleMove()
 /*
     /api/robot/data
     Returns all collected half-cell potential readings as a 2D JSON Array
-    ready for CountourMapGenerator.renderToCanvas().
+    ready for ContourMapGenerator.renderToCanvas().
 
     Serpentine correction is applied here as the robot drives in alternating passes
-    in opposite spatial directions so odd indexed passes are reversed so that colum 0
+    in opposite spatial directions so odd indexed passes are reversed so that column 0
     always represents the same physical side of the survey area.
 */
 
@@ -113,8 +119,8 @@ void handleGetData()
             }
         }
 
-        //Pad Shorter rows like an incomplete final pass with the last value
-        //So that the frontend always receives a rectangluar array
+        //Pad shorter rows like an incomplete final pass with the last value
+        //So that the frontend always receives a rectangular array
         float padValue = (samplesInPass > 0) ? getGridReading(p, samplesInPass - 1) : 0.0f;
         for (int s = samplesInPass; s < maxSamples; s++)
         {
@@ -149,6 +155,8 @@ void initWebServer()
     server.on("/api/robot/start", HTTP_POST, handleStartGrid);
     server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
     server.on("/api/robot/data", HTTP_GET, handleGetData);
+    server.on("/api/robot/clear", HTTP_POST, handleClearData);     // Fix 5
+    server.on("/api/robot/telemetry", HTTP_GET, handleTelemetry);  // Fix 8
     server.onNotFound(handleFileRequest);
 
     //Start Server
@@ -176,12 +184,24 @@ void handleUpload()
     float len = doc["length"];
     float width = doc["width"];
     int passes = doc["passes"];
+
+    //Reject bad length/width that is over max values
+    if (len <= 0 || len > MAX_GRID_SAMPLES)
+    {
+        server.send(400, "application/json", "{\"error\":\"length must be between 1 and " + String(MAX_GRID_SAMPLES) + " ft\"}");
+        return;
+    }
+    if (width <= 0 || width > 500)
+    {
+        server.send(400, "application/json", "{\"error\":\"width must be between 1 and 500 ft\"}");
+        return;
+    }
     if (passes < 1 || passes > MAX_GRID_PASSES)
     {
         server.send(400, "application/json", "{\"error\":\"passes out of range\"}");
         return;
     }
-    String dir = doc["direction"];
+    String dir = doc["direction"] | "left";
 
     configureGrid(len, width, passes, (dir == "right"));
 
@@ -199,4 +219,19 @@ void handleStopGrid()
 {
     stopGridRun();
     server.send(200, "application/json", "{\"status\":\"stopped\"}");
+}
+
+//Zero all stored grid readings so the next /data poll returns an empty set.
+void handleClearData()
+{
+    clearGridData();
+    server.send(200, "application/json", "{\"status\":\"cleared\"}");
+}
+
+//Live encoder/connection status for the manual control page.
+void handleTelemetry()
+{
+    String json = "{\"ticksL\":" + String(getTicksLeft()) +
+                  ",\"ticksR\":" + String(getTicksRight()) + "}";
+    server.send(200, "application/json", json);
 }
