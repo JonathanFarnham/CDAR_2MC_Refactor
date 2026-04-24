@@ -155,8 +155,8 @@ void initWebServer()
     server.on("/api/robot/start", HTTP_POST, handleStartGrid);
     server.on("/api/robot/stop_grid", HTTP_POST, handleStopGrid);
     server.on("/api/robot/data", HTTP_GET, handleGetData);
-    server.on("/api/robot/clear", HTTP_POST, handleClearData);     // Fix 5
-    server.on("/api/robot/telemetry", HTTP_GET, handleTelemetry);  // Fix 8
+    server.on("/api/robot/clear", HTTP_POST, handleClearData);    
+    server.on("/api/robot/telemetry", HTTP_GET, handleTelemetry); 
     server.onNotFound(handleFileRequest);
 
     //Start Server
