@@ -226,7 +226,7 @@ void handleClearData()
 {
     if (isGridRunning())
     {
-        server.send(409, "application/json"),
+        server.send(409, "application/json",
             "{\"error\":\"Cannot clear while grid is running\"}");
         return;
     }

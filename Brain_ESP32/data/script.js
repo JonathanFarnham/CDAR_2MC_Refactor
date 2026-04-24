@@ -123,23 +123,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function poll() {
-            const target = response.isRunning ? 2000 : 5000;
-            if (pollIntervalMS !== target) startPolling(target);
             fetch('/api/robot/data')
-                .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-                .then(response => {
-                    renderResponse(response);
-                    // Speed up polling while the run is active
-                    const target = response.isRunning ? 2000 : 5000;
-                    if (pollTimer && getIntervalMs() !== target) startPolling(target);
-                })
-                .catch(() => {
-                    if (runStatus) runStatus.textContent = '⚠️ No connection';
-                });
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(response => {
+                renderResponse(response);
+                const target = response.isRunning ? 2000 : 5000;
+                if (pollIntervalMs !== target) startPolling(target);
+            })
+            .catch(() => {
+                if (runStatus) runStatus.textContent = '⚠️ No connection';
+            });
         }
-
-        // Track the current interval so we can avoid unnecessary restarts
-        function getIntervalMs() { return pollTimer ? pollTimer._repeat : 0; }
 
         /* ------------------------------------------------------------------
          * Input validation
