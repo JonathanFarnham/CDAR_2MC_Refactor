@@ -13,6 +13,8 @@ bool uart_receive_targets(float* targetL, float* targetR)
     bool received = false;
     while (Serial2.available()) {
         String msg = Serial2.readStringUntil('\n');
+        Serial.printf("RX: [%s]\n", msg.c_str());   // <-- DEBUG: print every incoming line
+
         if (msg.startsWith("T,")) { // 'T' for Targets
             int firstComma = msg.indexOf(',');
             int secondComma = msg.indexOf(',', firstComma + 1);

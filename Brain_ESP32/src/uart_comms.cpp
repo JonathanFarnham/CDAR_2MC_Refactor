@@ -16,22 +16,32 @@ void uart_enqueue_targets(float leftRPM, float rightRPM)
 {
     RPMTarget t = { leftRPM, rightRPM };
     // Overwrite if the queue is already full so STOP commands always get through
-    xQueueOverwrite(target_queue, &t);
+    BaseType_t r = xQueueOverwrite(target_queue, &t);
+    Serial.printf(" enqueue: q=%p result=%d\n", target_queue, (int)r);
 }
 
 // Called from Core 1 (main loop) — same core as uart_receive_telemetry
 void uart_flush_targets()
 {
     RPMTarget t;
-    if (xQueueReceive(target_queue, &t, 0) == pdTRUE)
+    BaseType_t r = xQueueReceive(target_queue, &t, 0);
+
+    // Log the handle + receive result once per second, regardless of outcome
+    static unsigned long lastLog = 0;
+    if (millis() - lastLog > 1000) {
+        lastLog = millis();
+        Serial.printf("flush: q=%p r=%d\n", target_queue, (int)r);
+    }
+
+    if (r == pdTRUE)
     {
+        Serial.printf("TX -> T,%.1f,%.1f\n", t.left, t.right);
         Serial2.print("T,");
         Serial2.print(t.left);
         Serial2.print(",");
         Serial2.println(t.right);
     }
 }
-
 bool uart_receive_telemetry(long* ticksL, long* ticksR)
 {
     bool received = false;

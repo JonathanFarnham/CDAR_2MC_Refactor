@@ -1,5 +1,6 @@
 #include "drive_system.h"
 #include "uart_comms.h"
+#include <Arduino.h>
 
 // Variables to hold the ticks sent from the Brawn over UART
 long virtual_ticks_l = 0;
@@ -25,6 +26,7 @@ void updateDriveSystem() {
 
 void setTargetRPM(float leftRPM, float rightRPM) {
     // Send targets to Brawn instead of calculating PID locally
+    Serial.printf(" setTargetRPM(%.1f, %.1f)\n", leftRPM, rightRPM);
     uart_enqueue_targets(leftRPM, rightRPM); 
 }
 

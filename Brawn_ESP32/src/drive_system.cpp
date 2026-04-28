@@ -142,6 +142,10 @@ void updateDriveSystem()
         outputL = constrain(outputL, -200, 200);
         outputR = constrain(outputR, -200, 200);
 
+        Serial.printf("PWM out: L=%d R=%d (target L=%.1f R=%.1f, current L=%.1f R=%.1f)\n",
+              outputL, outputR, activeTargetRPM_L, activeTargetRPM_R,
+              currentRPM_L, currentRPM_R);
+
         setMotorRaw(outputL, outputR);
     }
 }

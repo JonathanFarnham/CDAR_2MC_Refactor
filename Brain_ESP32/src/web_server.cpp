@@ -61,7 +61,11 @@ void handleMove()
     //fall back to "" when "direction" is missing so strcmp doesn't dereference a null pointer
     const char* cmd = doc["direction"] | "";
 
-    if (strcmp(cmd, "FORWARD") == 0) setTargetRPM(speedRPM, speedRPM);
+    if (strcmp(cmd, "FORWARD") == 0)
+    {
+        setTargetRPM(speedRPM, speedRPM);
+        Serial.println(" dispatch: FWD");
+    }
     else if (strcmp(cmd, "BACKWARD") == 0) setTargetRPM(-speedRPM, -speedRPM);
     else if (strcmp(cmd, "LEFT") == 0) setTargetRPM(-speedRPM, speedRPM);
     else if (strcmp(cmd, "RIGHT") == 0) setTargetRPM(speedRPM, -speedRPM);

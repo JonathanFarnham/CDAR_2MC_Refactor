@@ -72,7 +72,7 @@
 
 //Grid Speed Values
 #define SPEED_GRID_RPM 300
-#define SPEED_TURN_RPM 200
+#define SPEED_TURN_RPM 150
 
 //Grid Data Collection Limits
 #define MAX_GRID_PASSES 30
