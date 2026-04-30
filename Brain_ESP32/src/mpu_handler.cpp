@@ -27,7 +27,7 @@ bool initMPU()
     if (!mpu.begin())
     {
         Serial.println("Failed to find MPU6050");
-        return;
+        return false;
     }
 
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
