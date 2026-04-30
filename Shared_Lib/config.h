@@ -19,7 +19,7 @@
 //ADS1220 SPI Pins (Brain Only)
 #define ADS1220_CS_PIN 2
 #define ADS1220_DRDY_PIN 34
-#define ADS1220_SCK_PIN 14
+#define ADS1220_SCK_PIN 33 //moved to 33 from 14 for ease of soldering
 #define ADS1220_MISO_PIN 19
 #define ADS1220_MOSI_PIN 13
 
