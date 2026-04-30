@@ -29,7 +29,7 @@ void setup()
 
   initDriveSystem(); // Initializes UART bridge
   initWebServer();   // Mounts LittleFS and starts AP
-  initMPU();         //Init MPU
+
   initServo();       //Initizalize Servo for Electrode Wheel
   initElectrodeSensor(); //Initialize half-cell sensor
 

@@ -60,6 +60,13 @@ void startGridRun()
     if (grid_len_ft == 0 || total_passes == 0) return;
     if (isAutoPilotActive) return;
 
+    //Fresh calibration of grid
+    if (!initMPU())
+    {
+        Serial.println("MPU init failed aborting grid");
+        return;
+    }
+
     isAutoPilotActive = true;
     currentState = DRIVING_LONG;
     current_pass = 1;
@@ -139,7 +146,7 @@ void handleGrid()
 
     if (currentState == BRAKING)
     {
-        if (millis() - stateWaitStart >= 200)
+        if (millis() - stateWaitStart >= 1000)
         {
             resetTickCount();
             currentState = stateAfterWait;
@@ -160,7 +167,7 @@ void handleGrid()
                             ? (grid_width_ft / (total_passes - 1))
                             : grid_width_ft;
                         target_ticks = spacing * TICKS_PER_FOOT;
-                        setTargetRPM(SPEED_GRID_RPM, SPEED_GRID_RPM);
+                        setTargetRPM(SPEED_SHORT_RPM, SPEED_SHORT_RPM);
                     }
                     break;
  
@@ -250,9 +257,10 @@ void handleGrid()
                 float heading_Kp = 5.0;
                 float rpmCorrection = headingError * heading_Kp;
                 rpmCorrection = constrain(rpmCorrection, -40, 40);
- 
-                setTargetRPM(SPEED_GRID_RPM - rpmCorrection,
-                             SPEED_GRID_RPM + rpmCorrection);
+                
+                float baseRPM = (currentState == DRIVING_SHORT) ? SPEED_SHORT_RPM : SPEED_GRID_RPM;
+                setTargetRPM(baseRPM - rpmCorrection,
+                             baseRPM + rpmCorrection);
             }
  
             //Electrode Sampling-> one reading every TICKS_PER_FOOT during long passes

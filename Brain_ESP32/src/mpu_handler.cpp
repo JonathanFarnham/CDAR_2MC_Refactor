@@ -8,6 +8,7 @@ Adafruit_MPU6050 mpu;
 
 //Volatile flag for the interrupt
 volatile bool mpuDataReady = false;
+static bool mpuInitialized = false;
 
 float currentYaw = 0.0;
 unsigned long lastMPUTime = 0;
@@ -19,8 +20,9 @@ void IRAM_ATTR dmpDataReady()
     mpuDataReady = true;
 }
 
-void initMPU()
+bool initMPU()
 {
+    mpuInitialized = false;
     Wire.begin(I2C_SDA, I2C_SCL);
     if (!mpu.begin())
     {
@@ -58,12 +60,17 @@ void initMPU()
     }
     gyroZ_offset = sumZ / 200.0;
 
+    currentYaw = 0.0;
     //switch to micros() for higher precision timing with rapid interrupts
     lastMPUTime = micros();
+    mpuDataReady = false;
+    mpuInitialized = true;
+    return true;
 }
 
 void updateMPU()
 {
+    if (!mpuInitialized) return; //skip until calibration completes
     //Only Execute the slow I2C read if told
     if (mpuDataReady)
     {
@@ -93,6 +100,6 @@ float getYawAngle()
 void resetYaw()
 {
     currentYaw = 0.0;
-    lastMPUTime = micros(); //Reset Timer so dt doesnt spike
+    if (mpuInitialized) lastMPUTime = micros(); //Reset Timer so dt doesnt spike
     mpuDataReady = false; //clear interrupts triggered during delay
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-void initMPU();
+bool initMPU();
 void updateMPU();
 float getYawAngle();
 void resetYaw();
