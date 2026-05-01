@@ -146,7 +146,7 @@ void handleGrid()
 
     if (currentState == BRAKING)
     {
-        if (millis() - stateWaitStart >= 1000)
+        if (millis() - stateWaitStart >= 750)
         {
             resetTickCount();
             currentState = stateAfterWait;

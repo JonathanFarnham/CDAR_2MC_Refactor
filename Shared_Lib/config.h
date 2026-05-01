@@ -81,5 +81,5 @@
 
 //Servo Definitions (Brain Pin Def)
 #define SERVO_PIN 18
-#define SERVO_WHEEL_UP 90
-#define SERVO_WHEEL_DOWN 0
+#define SERVO_WHEEL_UP 120
+#define SERVO_WHEEL_DOWN 54
